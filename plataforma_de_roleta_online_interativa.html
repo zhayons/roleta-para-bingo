@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plataforma de Roleta Online</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Font Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom Scrollbar for list and textarea */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .shadow-glow {
+      box-shadow: 0 0 25px rgba(79, 70, 229, 0.3);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+          <i class="fa-solid fa-dharmachakra animate-spin-slow"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+            Roleta Interativa
+          </h1>
+          <p class="text-xs text-slate-400">Personalize, Gire & Sorteie</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="configBtn" onclick="openConfigModal()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-medium text-slate-200 transition flex items-center gap-2" title="Configurações">
+          <i class="fa-solid fa-gear text-indigo-400"></i>
+          <span class="hidden sm:inline">Configurações</span>
+        </button>
+        <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-medium text-slate-200 transition flex items-center gap-2">
+          <i id="soundIcon" class="fa-solid fa-volume-high text-indigo-400"></i>
+          <span id="soundText" class="hidden sm:inline">Som: Ativado</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
+    
+    <!-- TOP HALF: Wheel (Left) & Interactive Number Board (Right) -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+      
+      <!-- LEFT TOP: The Wheel Display -->
+      <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center relative min-h-[420px] lg:min-h-[480px] shadow-xl overflow-hidden">
+        <!-- Background Ambient Glow -->
+        <div class="absolute w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <!-- Pointer Indicator (Top Center) -->
+        <div class="relative z-10 mb-[-24px] text-red-500 drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]">
+          <i class="fa-solid fa-caret-down text-5xl"></i>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="relative w-full flex-1 flex items-center justify-center max-w-[420px] aspect-square py-2">
+          <canvas id="wheelCanvas" class="w-full h-full drop-shadow-2xl cursor-pointer transition-transform duration-300 hover:scale-[1.01]"></canvas>
+        </div>
+
+        <!-- Spin Controls -->
+        <div class="mt-4 w-full max-w-xs flex flex-col items-center gap-2 z-10">
+          <button id="spinBtn" onclick="spinWheel()" class="w-full py-3.5 px-6 rounded-xl font-extrabold text-lg text-white bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 hover:from-indigo-600 hover:via-purple-700 hover:to-pink-600 active:scale-95 shadow-lg shadow-indigo-500/30 transition duration-150 flex items-center justify-center gap-3">
+            <i class="fa-solid fa-play"></i>
+            GIRAR A ROLETA!
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT TOP: Customizable Interactive Number Board -->
+      <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 shadow-xl flex flex-col gap-4 min-h-[420px] lg:min-h-[480px]">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700/60 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-hashtag text-purple-400"></i>
+            <h2 class="text-sm font-semibold text-slate-200">Painel Numerado Interativo</h2>
+          </div>
+          
+          <!-- Customizable Quantity Control -->
+          <div class="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-700/80">
+            <label for="numberCountInput" class="text-xs text-slate-400 pl-1">Qtd:</label>
+            <input type="number" id="numberCountInput" value="30" min="1" max="200" class="w-16 bg-slate-800 border border-slate-600 rounded-lg text-center text-sm font-bold text-slate-100 focus:outline-none focus:ring-1 focus:ring-purple-500 px-1 py-0.5" onchange="generateNumberGrid()">
+            <button onclick="resetNumberGrid()" title="Limpar seleções" class="px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-400">Clique em qualquer número para marcar/preencher a cor de fundo:</p>
+
+        <!-- Dynamic Grid of Number Buttons -->
+        <div id="numberGrid" class="flex-1 overflow-y-auto pr-1 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2.5 items-start">
+          <!-- Dynamically Generated Buttons -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- BOTTOM HALF: Textarea options for the wheel -->
+    <section class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <label for="wheelItemsInput" class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-list-ul text-indigo-400"></i>
+          Itens da Roleta (1 item por linha)
+        </label>
+        <span id="itemCountTag" class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/50">
+          6 opções
+        </span>
+      </div>
+      <textarea id="wheelItemsInput" rows="4" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-y font-mono leading-relaxed" placeholder="Escreva uma opção por linha..." oninput="updateWheelFromInput()"></textarea>
+      <p class="text-xs text-slate-400">
+        <i class="fa-solid fa-circle-info mr-1 text-slate-500"></i>
+        Altere o texto acima para atualizar instantaneamente as fatias da roleta.
+      </p>
+    </section>
+
+  </main>
+
+  <!-- Winner Modal Popup -->
+  <div id="winnerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300 scale-95">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden transform transition-all">
+      <!-- Glow decoration -->
+      <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="w-16 h-16 bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-amber-500/20">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+
+      <h3 class="text-xs uppercase tracking-widest font-extrabold text-indigo-400 mb-1">
+        Resultado do Sorteio
+      </h3>
+      
+      <div id="winnerResultText" class="text-2xl sm:text-3xl font-extrabold text-white my-4 py-3 px-4 bg-slate-800/80 border border-slate-700/60 rounded-2xl break-words shadow-inner">
+        ---
+      </div>
+
+      <p class="text-xs text-slate-400 mb-6">Escolha o que deseja fazer a seguir:</p>
+
+      <div class="flex flex-col gap-2.5">
+        <button onclick="spinAgain()" class="w-full py-3 px-5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg transition duration-150 active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate-right"></i>
+          Rodar novamente
+        </button>
+        <button onclick="removeItemOnly()" class="w-full py-3 px-5 bg-rose-600/90 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg transition duration-150 active:scale-95 flex items-center justify-center gap-2 text-sm">
+          <i class="fa-solid fa-trash-can"></i>
+          Excluir item
+        </button>
+        <button onclick="closeModal()" class="w-full py-2 px-4 text-xs font-semibold text-slate-400 hover:text-slate-200 transition">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="configModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300 scale-95">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl relative overflow-hidden transform transition-all">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-5">
+        <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-indigo-400"></i>
+          Configurações da Roleta
+        </h3>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-4 mb-6">
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label for="spinDurationInput" class="text-xs font-semibold text-slate-300">
+              Tempo de giro (segundos):
+            </label>
+            <span id="spinDurationValue" class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">
+              4.5s
+            </span>
+          </div>
+          <input type="range" id="spinDurationInput" min="1" max="10" step="0.5" value="4.5" oninput="updateSpinDurationLabel(this.value)" class="w-full accent-indigo-500 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+            <span>Rápido (1s)</span>
+            <span>Lento (10s)</span>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="closeConfigModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm rounded-xl transition">
+        Salvar e Fechar
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // --- State Variables ---
+    let items = [
+      "Opção 1",
+      "Opção 2",
+      "Opção 3",
+      "Opção 4",
+      "Opção 5",
+      "Opção 6"
+    ];
+    
+    // Color palette for slices
+    const sliceColors = [
+      '#6366f1', '#ec4899', '#8b5cf6', '#10b981', 
+      '#f59e0b', '#06b6d4', '#3b82f6', '#f43f5e',
+      '#14b8a6', '#a855f7', '#eab308', '#64748b'
+    ];
+
+    let currentAngle = 0; // Current rotation angle in radians
+    let isSpinning = false;
+    let soundEnabled = true;
+    let spinDurationSeconds = 4.5;
+    let currentWinningIndex = -1;
+
+    // Web Audio API Synthesizer for sound effects
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTickSound() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.04);
+
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.04);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.04);
+      } catch (e) {
+        // Audio fallback ignore
+      }
+    }
+
+    function playWinSound() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const notes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C
+
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+
+          gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(now + idx * 0.1);
+          osc.stop(now + idx * 0.1 + 0.3);
+        });
+      } catch (e) {
+        // Audio fallback ignore
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('soundIcon');
+      const text = document.getElementById('soundText');
+      if (soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high text-indigo-400';
+        text.innerText = 'Som: Ativado';
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+        text.innerText = 'Som: Desativado';
+      }
+    }
+
+    // --- Settings Modal Logic ---
+    function openConfigModal() {
+      const modal = document.getElementById('configModal');
+      modal.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+      modal.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+    }
+
+    function closeConfigModal() {
+      const modal = document.getElementById('configModal');
+      modal.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+      modal.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+    }
+
+    function updateSpinDurationLabel(val) {
+      spinDurationSeconds = parseFloat(val);
+      document.getElementById('spinDurationValue').innerText = `${spinDurationSeconds}s`;
+    }
+
+    // --- Wheel Drawing Logic ---
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const container = canvas.parentElement;
+      const size = Math.min(container.clientWidth, container.clientHeight, 460);
+      const dpr = window.devicePixelRatio || 1;
+      
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      ctx.scale(dpr, dpr);
+      drawWheel();
+    }
+
+    function drawWheel() {
+      const size = canvas.width / (window.devicePixelRatio || 1);
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const radius = size / 2 - 12;
+
+      ctx.clearRect(0, 0, size, size);
+
+      if (items.length === 0) {
+        // Empty state
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '14px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Adicione opções ao lado', centerX, centerY);
+        return;
+      }
+
+      const sliceAngle = (2 * Math.PI) / items.length;
+
+      // Draw slices
+      items.forEach((item, index) => {
+        const startAngle = currentAngle + index * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        // Slice path
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+
+        // Slice color
+        ctx.fillStyle = sliceColors[index % sliceColors.length];
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Text
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        
+        // Font sizing based on item count
+        const fontSize = Math.max(10, Math.min(16, 220 / items.length));
+        ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+
+        // Truncate text if too long
+        let textToDraw = item;
+        const maxTextWidth = radius - 45;
+        if (ctx.measureText(textToDraw).width > maxTextWidth) {
+          while (ctx.measureText(textToDraw + '...').width > maxTextWidth && textToDraw.length > 0) {
+            textToDraw = textToDraw.slice(0, -1);
+          }
+          textToDraw += '...';
+        }
+
+        ctx.fillText(textToDraw, radius - 20, 0);
+        ctx.restore();
+      });
+
+      // Outer Ring
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // Center Knob
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 24, 0, 2 * Math.PI);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    }
+
+    // --- Input & Wheel Syncing ---
+    function updateWheelFromInput() {
+      const textarea = document.getElementById('wheelItemsInput');
+      const lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      items = lines;
+
+      document.getElementById('itemCountTag').innerText = `${items.length} opçõ${items.length === 1 ? 'ã' : 'õe'}s`;
+      drawWheel();
+    }
+
+    // --- Spin Wheel Logic ---
+    let lastSliceIndex = -1;
+
+    function spinWheel() {
+      if (isSpinning) return;
+      if (items.length === 0) {
+        alert("Por favor, adicione pelo menos uma opção no campo de texto.");
+        return;
+      }
+
+      isSpinning = true;
+      document.getElementById('spinBtn').disabled = true;
+      document.getElementById('spinBtn').classList.add('opacity-50', 'cursor-not-allowed');
+
+      // Random rotation setup
+      const spinDuration = spinDurationSeconds * 1000; // milliseconds
+      const startTime = performance.now();
+      const startAngle = currentAngle;
+      
+      // Minimum spins proportional to duration + random target angle
+      const minSpins = Math.max(3, Math.floor(spinDurationSeconds * 1.2));
+      const totalRotation = (Math.PI * 2 * minSpins) + Math.random() * (Math.PI * 2);
+
+      function animateSpin(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / spinDuration, 1);
+
+        // Ease out cubic easing function
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        currentAngle = startAngle + totalRotation * easeOut;
+
+        // Check tick audio when crossing slice boundaries
+        const sliceAngle = (2 * Math.PI) / items.length;
+        // Pointer is at 270 degrees (Top center, i.e., -PI/2 or 3*PI/2)
+        const normalizedAngle = (2 * Math.PI - (currentAngle % (2 * Math.PI))) % (2 * Math.PI);
+        const pointerAngle = (normalizedAngle + Math.PI * 1.5) % (2 * Math.PI);
+        const currentSliceIndex = Math.floor(pointerAngle / sliceAngle) % items.length;
+
+        if (currentSliceIndex !== lastSliceIndex) {
+          playTickSound();
+          lastSliceIndex = currentSliceIndex;
+        }
+
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animateSpin);
+        } else {
+          // Finished Spin
+          isSpinning = false;
+          document.getElementById('spinBtn').disabled = false;
+          document.getElementById('spinBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+
+          // Store winning index and item
+          currentWinningIndex = currentSliceIndex;
+          const winnerText = items[currentWinningIndex];
+
+          showWinnerModal(winnerText);
+        }
+      }
+
+      requestAnimationFrame(animateSpin);
+    }
+
+    // --- Winner Modal & Confetti ---
+    function showWinnerModal(text) {
+      document.getElementById('winnerResultText').innerText = text;
+      const modal = document.getElementById('winnerModal');
+      
+      modal.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+      modal.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+
+      playWinSound();
+      triggerConfetti();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('winnerModal');
+      modal.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+      modal.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+    }
+
+    function spinAgain() {
+      closeModal();
+      setTimeout(() => {
+        spinWheel();
+      }, 200);
+    }
+
+    function removeItemOnly() {
+      if (currentWinningIndex >= 0 && currentWinningIndex < items.length) {
+        // Remove winning item from items array
+        items.splice(currentWinningIndex, 1);
+        
+        // Synchronize textarea
+        const textarea = document.getElementById('wheelItemsInput');
+        textarea.value = items.join('\n');
+        document.getElementById('itemCountTag').innerText = `${items.length} opçõ${items.length === 1 ? 'ã' : 'õe'}s`;
+        
+        // Redraw wheel
+        drawWheel();
+      }
+
+      closeModal();
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#6366f1', '#ec4899', '#8b5cf6', '#10b981', '#f59e0b']
+        });
+      }
+    }
+
+    // --- Dynamic Number Grid Logic ---
+    function generateNumberGrid() {
+      const grid = document.getElementById('numberGrid');
+      const countInput = document.getElementById('numberCountInput');
+      let count = parseInt(countInput.value, 10);
+      
+      if (isNaN(count) || count < 1) count = 1;
+      if (count > 200) count = 200;
+      countInput.value = count;
+
+      grid.innerHTML = '';
+
+      for (let i = 1; i <= count; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.innerText = i;
+        btn.className = 'w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-slate-900 border border-slate-700/80 hover:border-indigo-500 font-bold text-xs sm:text-sm text-slate-300 flex items-center justify-center transition-all duration-200 select-none shadow-sm hover:scale-105 active:scale-95';
+        
+        btn.onclick = function() {
+          this.classList.toggle('bg-gradient-to-tr');
+          this.classList.toggle('from-indigo-600');
+          this.classList.toggle('to-purple-600');
+          this.classList.toggle('text-white');
+          this.classList.toggle('border-indigo-400');
+          this.classList.toggle('shadow-md');
+          this.classList.toggle('shadow-indigo-500/30');
+          this.classList.toggle('bg-slate-900');
+          this.classList.toggle('text-slate-300');
+        };
+
+        grid.appendChild(btn);
+      }
+    }
+
+    function resetNumberGrid() {
+      generateNumberGrid();
+    }
+
+    // Initialize on window load
+    window.onload = function() {
+      const textarea = document.getElementById('wheelItemsInput');
+      textarea.value = items.join('\n');
+      document.getElementById('itemCountTag').innerText = `${items.length} opções`;
+
+      generateNumberGrid();
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      // Canvas click to spin shortcut
+      canvas.addEventListener('click', () => {
+        if (!isSpinning) spinWheel();
+      });
+    };
+  </script>
+</body>
+</html>
